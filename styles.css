@@ -1,0 +1,25 @@
+:root{
+    --primary-color: #007bff;
+    --secondary-color: #ff6600;
+    --background-color: #000;
+    --text-color: #333;
+    --white: #ffffff;
+
+    --font-primary:  "Montserrat", serif;
+    --font-secondary:  "Lato", serif;
+
+}
+
+body,html{
+    padding: 0;
+    margin: 0;
+    background-color: var(--background-color);
+    /* height: 100%; */
+    /* font-family:var(--font-primary);
+    position: relative;
+   
+    overflow: auto;
+    font-family: "Montserrat", serif; */
+}
+
+
