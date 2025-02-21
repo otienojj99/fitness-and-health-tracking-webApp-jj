@@ -4,10 +4,11 @@ session_start();
 if (!isset($_SESSION['user_id'])) {
     die("Error: User is not logged in. Please log in first.");
 }
-
+$user_id = $_SESSION['user_id'];
+$exercise_id = $_POST['exercise_id'];
 $stmt = $conn->query("SELECT * FROM exercise_categories");
 $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$user_id = $_SESSION['user_id'];
+
 ?>
 
 <!DOCTYPE html>
@@ -48,6 +49,7 @@ $user_id = $_SESSION['user_id'];
     <h2>Progress Log Form</h2>
     <form action="save_progress.php" method="POST">
         <input type="hidden" name="user_id" value="<?php echo $_SESSION['user_id']; ?>">
+        <input type="hidden" name="$exercise_id" value="<?php echo $exercise_id; ?>">
         <label for="activity_type">Activity Type:</label>
         <select id="activity_type" name="activity_type" required>
             <option value="Workout">Workout</option>
@@ -116,7 +118,7 @@ $user_id = $_SESSION['user_id'];
         $(".reps-sets-fields, .duration-field").hide();
 
         function initializeEventListeners() {
-            $("#categorySelect").change(function() {
+            $(document).on("change", "#categorySelect", function() {
                 let categoryId = $(this).val();
                 let exerciseSelect = $(this).closest(".entry-group").find("#exerciseSelect");
                 let repsSetsFields = $(this).closest(".entry-group").find(".reps-sets-fields");
@@ -218,9 +220,15 @@ $user_id = $_SESSION['user_id'];
             if (repsSetsExercises.includes(exerciseName)) {
                 repsSetsFields.show();
                 durationField.hide();
+
+                repsSetsFields.find("input").attr("required", true);
+                durationField.find("input").removeAttr("required");
             } else {
                 repsSetsFields.hide();
                 durationField.show();
+
+                durationField.find("input").attr("required", true);
+                repsSetsFields.find("input").removeAttr("required");
             }
         });
 
