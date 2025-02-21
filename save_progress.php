@@ -5,10 +5,16 @@ session_start();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['user_id']) && !empty($_POST['user_id'])) {
         $user_id = $_POST['user_id'];
+        // $exercise_id = $_POST['exercise_id'];
     } else {
         die("Error: User ID is missing!");
     }
-    // $meals = isset($_POST['meal']) ? array_map(fn($m) => htmlspecialchars(trim($m), ENT_QUOTES, 'UTF-8'), $_POST['meal']) : [];
+    // if (isset($_POST['exercise_id']) && !empty($_POST['exercise'])) {
+    //     $exercise_id = $_POST['exercise_id'];
+    // } else {
+    //     die("Error: Exercise ID is missing!");
+    // }
+    $meals = isset($_POST['meal']) ? array_map(fn($m) => htmlspecialchars(trim($m), ENT_QUOTES, 'UTF-8'), $_POST['meal']) : [];
     $conn->beginTransaction();
     try {
         $activity_type = isset($_POST['activity_type']) ? htmlspecialchars(trim($_POST['activity_type'])) : '';
@@ -19,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sets = isset($_POST['sets']) ?  array_map(fn($s) => htmlspecialchars(trim($s), ENT_QUOTES, 'UTF-8'), $_POST['sets']) : [];
             $reps = isset($_POST['reps']) ? array_map(fn($r) => htmlspecialchars(trim($r), ENT_QUOTES, 'UTF-8'), $_POST['reps']) : [];
             $duration = isset($_POST['duration']) ?  array_map(fn($d) => htmlspecialchars(trim($d), ENT_QUOTES, 'UTF-8'), $_POST['duration']) : [];
-            $query = "INSERT INTO workout_logs(user_id,log_date,exercise,sets,reps,duration,activity_factor) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $exercise_id  = isset($_POST['exercise_id']) ?  array_map(fn($e) => htmlspecialchars(trim($e), ENT_QUOTES, 'UTF-8'), $_POST['exercise_id']) : [];
+            $query = "INSERT INTO workout_logs(user_id,log_date,exercise,sets,reps,duration,activity_factor, exercise_id) VALUES (?, ?, ?, ?, ?, ?, ?,?)";
             $stmt = $conn->prepare($query);
             for ($i = 0; $i < count($exercise); $i++) {
                 $stmt->execute([
@@ -30,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $reps[$i],
                     $duration[$i],
                     $activityFactor,
+                    $exercise_id[$i]
                 ]);
                 $conn->commit();
                 echo "Workout log saved successfully.";

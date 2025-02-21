@@ -5,7 +5,7 @@ if (!isset($_SESSION['user_id'])) {
     die("Error: User is not logged in. Please log in first.");
 }
 $user_id = $_SESSION['user_id'];
-$exercise_id = $_POST['exercise_id'];
+// $exercise_id = $_POST['exercise_id'];
 $stmt = $conn->query("SELECT * FROM exercise_categories");
 $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
