@@ -9,6 +9,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die("Error: User ID is missing!");
     }
 
+    $query = "SELECT target_date FROM goals WHERE user_id = ? ORDER BY target_date DESC LIMIT 1";
+    $stmt = $conn->prepare($query);
+    $stmt->execute([$user_id]);
+    $existing_goal = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existing_goal) {
+        $target_date = $existing_goal['target_date'];
+        $current_date = date('Y-m-d');
+
+        if ($current_date < $target_date) {
+            die("Error: You already have an active goal until $target_date.");
+        }
+    }
 
     // $user_id = (int) $_POST['user_id'];
     $weight_loss = isset($_POST['weightLoss']) ? 1 : 0;

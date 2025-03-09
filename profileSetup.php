@@ -207,6 +207,28 @@ $user_id = $_SESSION['user_id'];
 
     }
 
+    .popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
     button {
         display: block;
         width: 150px;
@@ -219,17 +241,18 @@ $user_id = $_SESSION['user_id'];
         font-weight: 600;
         font-size: 17px;
         cursor: pointer;
-
     }
 </style>
 
 <body>
-    <div class="header">
-        <?php include 'navbar.php' ?>
-    </div>
+    <!-- <div class="header">
+        <?php //include 'navbar.php' 
+        ?>
+    </div> -->
+
     <div class="main-cont">
         <div class="contain">
-            <form action="goal_save.php" method="POST">
+            <form action="goal_save.php" method="POST" id="goalForm">
                 <input type="hidden" name="user_id" value="<?php echo $_SESSION['user_id']; ?>">
                 <h3>Select yous goals</h3>
                 <div class="goals">
@@ -362,7 +385,7 @@ $user_id = $_SESSION['user_id'];
                             <div class="input-wrapper">
                                 <label for="current_weight">Current Weight (kg):</label> <br>
                                 <input type="text" id="current_weight" name="current_weight" min="1" step="0.1"
-                                    placeholder="Current Weight (kg)">
+                                    placeholder="Current Weight (kg)" required>
                                 <i class="fas fa-dumbbell"></i>
                             </div>
                             <div class="input-wrapper">
@@ -420,7 +443,35 @@ $user_id = $_SESSION['user_id'];
                 <button type="submit">Save Goal</button>
             </form>
         </div>
+
+        <div class="overlay" id="overlay">
+            <div class="popup" id="payment_popup">
+                <h3 id="planTitle"></h3>
+                <p id="planDesc"></p>
+                <label><input type="radio" name="payment" value="mpesa"> Mpesa</label>
+                <div id="paypal-button-container1">
+                    <label><input type="radio" name="payment" value="paypal"> PayPal</label>
+                </div>
+                <div id="mpesaFields" style="display:none;">
+                    <input type="text" id="mpesaName" name="name" placeholder="Full Name">
+                    <input type="text" id="mpesaNumber" name="mpesa_contact" placeholder="Mpesa Number">
+
+                </div>
+                <!-- <button id="confirmPayment" disabled>Proceed</button> -->
+
+                <div id="paypal-container" style="display:none;">
+                    <?php include 'payment_ui.php'; ?>
+                </div>
+
+                <button id="confirmPayment" disabled>Proceed</button>
+            </div>
+
+
+        </div>
+
     </div>
+
+    <!-- <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID"></script> -->
     <script>
         $(document).ready(function() {
             $("#target_date").datepicker({
@@ -430,6 +481,101 @@ $user_id = $_SESSION['user_id'];
                 changeYear: true // Allow year selection
             });
         });
+
+        const form = document.getElementById('goalForm');
+        const popup = document.getElementById('payment_popup');
+        const overlay = document.getElementById('overlay');
+        const planTitle = document.getElementById('planDesc');
+        const planDesc = document.getElementById('planDesc');
+        const mpesaFields = document.getElementById('mpesaFields');
+        const paymentOptions = document.querySelectorAll('input[name="payment"]');
+        const confirmBtn = document.getElementById('confirmPayment');
+        const paypalContainer = document.getElementById('paypal-container');
+
+        confirmBtn.disabled = true;
+
+        form.addEventListener('submit', function() {
+            const selectedPlan = document.querySelector('input[name="plan"]:checked').value;
+            if (selectedPlan === 'free') {
+                alert('Goals saved! Redirecting to dashboard...');
+            } else {
+                event.preventDefault();
+                popup.style.display = 'block';
+                overlay.style.display = 'block';
+                planTitle.innerText = selectedPlan.toUpperCase() + ' Plan';
+                planDesc.innerText = 'You have selected the ' + selectedPlan +
+                    ' plan. Choose a payment method below:';
+            }
+
+        });
+        paymentOptions.forEach(option => {
+            option.addEventListener('change', function() {
+                confirmBtn.disabled = false;
+                if (this.value === 'mpesa') {
+                    mpesaFields.style.display = 'block';
+                    paypalContainer.style.display = 'none'; // Hide PayPal buttons
+                    confirmBtn.style.display = 'block';
+
+                } else if (this.value === 'paypal') {
+                    paypalContainer.style.display = 'block';
+                    mpesaFields.style.display = 'none'; // Hide Mpesa fields
+                    confirmBtn.style.display = 'none';
+                }
+            });
+        });
+
+        confirmBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const selectedPlanElement = document.querySelector('input[name="plan"]:checked');
+            const selectedPlan = selectedPlanElement.value;
+            console.log(selectedPlanElement)
+            if (!selectedPlanElement) {
+                alert("Please select a plan.");
+                console.log(selectedPlanElement)
+                return;
+            }
+            // const phoneNumber = document.getElementById("mpesa_contact").value;
+            const inputPhoneNumber = document.querySelector('input[name="mpesa_contact"]');
+            const accountNameOwner = document.querySelector('input[name="name"]');
+            const accountHolder = accountNameOwner.value.trim();
+            console.log(accountHolder)
+            const phoneNumber = inputPhoneNumber.value.trim();
+            console.log(phoneNumber)
+            if (!phoneNumber) {
+                alert("Please enter your Mpesa phone number.");
+                console.log(phoneNumber)
+                return;
+            }
+            const modal = document.getElementById("payment_popup")
+            fetch("payment.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        plan: selectedPlan,
+                        payment_method: "Mpesa",
+                        mpesa_contact: phoneNumber,
+                        name: accountHolder
+                    }),
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    alert(data.success || data.error);
+                    console.log(data);
+                    if (data.success) {
+                        window.location.href = "dashbord.php";
+                        modal.style.display = 'none';
+                        overlay.style.display = 'none';
+                    }
+                })
+        })
+
+        // confirmBtn.addEventListener('click', function() {
+        //     modal.style.display = 'none';
+        //     overlay.style.display = 'none';
+        //     form.submit();
+        // });
     </script>
 
 </body>
